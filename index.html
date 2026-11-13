@@ -436,7 +436,7 @@ function showSchool(cod, syncSelects){
         fact('c-sky','i-pin','Provincia',esc(s.prov)) +
         fact('c-mint','i-pin','Comune sede di riferimento',esc(s.comune)) +
         fact('c-peach','i-tag','Codice meccanografico','<span style="font-family:ui-monospace,Consolas,monospace">'+esc(s.cod)+'</span>') +
-        fact('c-rose','i-mail','Email istituzionale','<a href="mailto:'+esc(mail)+'">'+esc(mail)+'</a>') +
+        fact('c-rose','i-mail','Email istituzionale',esc(mail)) +
       '</div>' +
       (tips.length ? '<div class="tipologie"><div class="t">Tipologie presenti</div><div class="chips">'+tips.map(t => '<span class="chip">'+esc(t)+'</span>').join('')+'</div></div>' : '') +
       '<div style="margin-top:16px"><button class="btn ghost" type="button" id="reset"><svg class="ic"><use href="#i-rotate"/></svg>Nuova ricerca</button></div>' +
