@@ -293,10 +293,10 @@ async function loadData(){
       .filter(x => String(x[3]||'').trim())
       .map(x => [x[1], x[2], x[3], x[5], x[6], x[7], x[8], x[9], x[10], x[11]]);
     if(!rows.length) throw new Error('file vuoto');
-    sourceNote = 'Dati: ' + DATA_FILE;
+    sourceNote = 'Fonte: Portale Unico dei Dati della Scuola';
     return rows;
   }catch(e){
-    sourceNote = 'Dati incorporati nella pagina';
+    sourceNote = 'Fonte: Portale Unico dei Dati della Scuola';
     return EMBEDDED;
   }
 }
@@ -424,6 +424,7 @@ function showSchool(cod, syncSelects){
       '<div class="actions">' +
         (s.equipeMail ? '<a class="btn gold" href="mailto:'+esc(s.equipeMail)+'?subject='+encodeURIComponent('Richiesta Équipe Formativa – '+s.den+' ('+s.cod+')')+'"><svg class="ic"><use href="#i-mail"/></svg>Scrivi all\'Équipe</a>' +
         '<button class="btn white" type="button" data-copy="'+esc(s.equipeMail)+'"><svg class="ic"><use href="#i-copy"/></svg>Copia email</button>' : '') +
+        '<a class="btn white" href="'+(LINKS.find(l=>l.id==="helpdesk")||{}).url+'" target="_blank" rel="noopener"><svg class="ic"><use href="#i-help"/></svg>Contatta l\'Help Desk</a>' +
       '</div>' +
     '</div>';
   const schoolHtml =
@@ -431,14 +432,10 @@ function showSchool(cod, syncSelects){
       '<div class="top"><div><h2>'+esc(s.den)+'</h2><div class="sub">'+esc(s.comune)+' · Provincia di '+esc(s.prov.charAt(0)+s.prov.slice(1).toLowerCase())+'</div></div>' +
       '<div class="badges"><span class="badge b-code"><svg class="ic"><use href="#i-tag"/></svg>'+esc(s.cod)+'</span><span class="badge b-ciclo"><svg class="ic"><use href="#i-layers"/></svg>'+esc(s.ciclo)+'</span></div></div>' +
       '<div class="facts">' +
-        fact('c-lav','i-flag','Regione','Campania') +
         fact('c-sky','i-pin','Provincia',esc(s.prov)) +
         fact('c-mint','i-pin','Comune sede di riferimento',esc(s.comune)) +
         fact('c-peach','i-tag','Codice meccanografico','<span style="font-family:ui-monospace,Consolas,monospace">'+esc(s.cod)+'</span>') +
         fact('c-rose','i-mail','Email istituzionale','<a href="mailto:'+esc(mail)+'">'+esc(mail)+'</a>') +
-        fact('c-butter','i-layers','Ciclo prevalente',esc(s.ciclo)) +
-        fact('c-sky','i-school','Codici scuola / plessi',esc(s.plessi)) +
-        fact('c-mint','i-check','Sede direttivo presente','<span class="'+sedeCls+'">'+sedeTxt+'</span>') +
       '</div>' +
       (tips.length ? '<div class="tipologie"><div class="t">Tipologie presenti</div><div class="chips">'+tips.map(t => '<span class="chip">'+esc(t)+'</span>').join('')+'</div></div>' : '') +
       '<div style="margin-top:16px"><button class="btn ghost" type="button" id="reset"><svg class="ic"><use href="#i-rotate"/></svg>Nuova ricerca</button></div>' +
