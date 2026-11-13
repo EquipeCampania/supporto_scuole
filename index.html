@@ -240,13 +240,13 @@ footer{margin-top:30px;text-align:center;color:var(--ink-soft);font-size:.8rem}
 const LINKS = [
   { id:"helpdesk", cls:"l-helpdesk", icon:"i-help",  title:"Help desk regionale",
     desc:"Assistenza e supporto per scuole e docenti.",
-    url:"https://docs.google.com/forms/d/e/1FAIpQLSfZ3ttbUQbZlVN-FokVREiIgS4BHR0XA9KOznrjczzrh6rmnw/viewform" },                                   // <-- INSERISCI QUI IL LINK ALL'HELP DESK REGIONALE
+    url:"" },                                   // <-- INSERISCI QUI IL LINK ALL'HELP DESK REGIONALE
   { id:"sito",     cls:"l-sito",     icon:"i-globe", title:"Sito di riferimento",
     desc:"Notizie, documenti e aggiornamenti.",
-    url:"https://www.eftcampania.edu.it/" },                                   // <-- INSERISCI QUI IL LINK AL SITO DI RIFERIMENTO
+    url:"" },                                   // <-- INSERISCI QUI IL LINK AL SITO DI RIFERIMENTO
   { id:"polo",     cls:"l-polo",     icon:"i-path",  title:"Polo regionale per i percorsi formativi",
     desc:"I percorsi formativi proposti dalle Équipe, con rilascio di attestato.", cert:true,
-    url:"https://scuolafutura.pubblica.istruzione.it/es/eft-campania" },                                   // <-- INSERISCI QUI IL LINK AL POLO REGIONALE
+    url:"" },                                   // <-- INSERISCI QUI IL LINK AL POLO REGIONALE
   { id:"mooc",     cls:"l-mooc",     icon:"i-play",  title:"Offerte MOOC a cura delle Équipe",
     desc:"Corsi online aperti, tutti con rilascio di attestato.", cert:true,
     url:"" }                                    // <-- INSERISCI QUI IL LINK ALLE OFFERTE MOOC
@@ -401,6 +401,7 @@ function fact(cls, icon, label, valueHtml){
 }
 function showSchool(cod, syncSelects){
   const s = SCHOOLS.find(x => x.cod === cod); if(!s) return;
+  window._currentSchool = s;
   if(syncSelects){
     syncing = true;
     selProv.value = s.prov; selProv.dispatchEvent(new Event('change'));
@@ -422,7 +423,7 @@ function showSchool(cod, syncSelects){
         (s.equipeMail ? '<div class="mail"><a href="mailto:'+esc(s.equipeMail)+'">'+esc(s.equipeMail)+'</a></div>' : '<div class="mail pending">Email non ancora disponibile</div>') +
       '</div>' +
       '<div class="actions">' +
-        (s.equipeMail ? '<a class="btn gold" href="mailto:'+esc(s.equipeMail)+'?subject='+encodeURIComponent('Richiesta Équipe Formativa – '+s.den+' ('+s.cod+')')+'"><svg class="ic"><use href="#i-mail"/></svg>Scrivi all\'Équipe</a>' +
+        (s.equipeMail ? '<button class="btn gold" type="button" id="open-mail-form"><svg class="ic"><use href="#i-mail"/></svg>Scrivi all\'Équipe</button>' +
         '<button class="btn white" type="button" data-copy="'+esc(s.equipeMail)+'"><svg class="ic"><use href="#i-copy"/></svg>Copia email</button>' : '') +
         '<a class="btn white" href="'+(LINKS.find(l=>l.id==="helpdesk")||{}).url+'" target="_blank" rel="noopener"><svg class="ic"><use href="#i-help"/></svg>Contatta l\'Help Desk</a>' +
       '</div>' +
@@ -482,6 +483,171 @@ function renderLinks(){
   const p = new URLSearchParams(location.search).get('cod');   // link diretto: ?cod=NAIC820006
   if(p) showSchool(p.toUpperCase(), true);
 })();
+
+
+/* ---- apertura modale email ---- */
+document.addEventListener('click', e => {
+  if(e.target.closest('#open-mail-form')){
+    const sc = window._currentSchool;
+    if(!sc) return;
+    openMailForm(sc);
+  }
+});
+
+function openMailForm(sc){
+  if($('#mail-modal')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'mail-modal';
+  overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-label','Scrivi all\'Équipe Formativa');
+  overlay.innerHTML = `
+<div class="mm-box">
+  <button class="mm-close" id="mm-close" aria-label="Chiudi">✕</button>
+  <h2 class="mm-title"><svg class="ic" style="vertical-align:-.15em"><use href="#i-mail"/></svg> Scrivi all'Équipe Formativa</h2>
+  <p class="mm-sub">Compila il modulo. L'email viene preparata nel tuo client di posta — puoi modificarla prima di inviarla.</p>
+  <div class="mm-to">
+    <span class="mm-label">A:</span>
+    <span class="mm-val">${esc(sc.equipe)} &lt;${esc(sc.equipeMail)}&gt;</span>
+  </div>
+
+  <form id="mail-form" novalidate>
+    <fieldset class="mm-fieldset">
+      <legend>Chi sei</legend>
+      <div class="mm-row">
+        <label for="mf-nome">Nome e cognome <span class="req">*</span></label>
+        <input id="mf-nome" name="nome" type="text" required placeholder="Es. Mario Rossi" autocomplete="name">
+      </div>
+      <div class="mm-row">
+        <label for="mf-funzione">Ruolo / funzione a scuola <span class="req">*</span></label>
+        <input id="mf-funzione" name="funzione" type="text" required placeholder="Es. Docente referente, DS, Animatore digitale…">
+      </div>
+      <div class="mm-row">
+        <label for="mf-scuola">Nome scuola e codice meccanografico</label>
+        <input id="mf-scuola" name="scuola" type="text" value="${esc(sc.den)} (${esc(sc.cod)})" readonly>
+      </div>
+      <div class="mm-row">
+        <label for="mf-comune">Comune</label>
+        <input id="mf-comune" name="comune" type="text" value="${esc(sc.comune)}" readonly>
+      </div>
+    </fieldset>
+
+    <fieldset class="mm-fieldset">
+      <legend>Ambiti di interesse</legend>
+      <p class="mm-hint">Seleziona uno o più ambiti su cui desideri informazioni o supporto:</p>
+      <label class="mm-check"><input type="checkbox" name="ambito" value="1"><span>Sostegno e accompagnamento per l'attuazione del PNRR, in particolare delle linee di investimento correlate all'educazione digitale</span></label>
+      <label class="mm-check"><input type="checkbox" name="ambito" value="2"><span>Promozione e supporto alla sperimentazione di nuovi modelli organizzativi, metodologie didattiche innovative, didattica digitale, cittadinanza digitale, educazione ai media e intelligenza artificiale</span></label>
+      <label class="mm-check"><input type="checkbox" name="ambito" value="3"><span>Promozione e accompagnamento per percorsi formativi docenti sulla transizione digitale (piattaforma "Scuola Futura"), comunità di pratiche, workshop e laboratori formativi</span></label>
+      <label class="mm-check"><input type="checkbox" name="ambito" value="4"><span>Documentazione e valorizzazione delle buone pratiche PNRR e delle sperimentazioni su metodologie didattiche innovative</span></label>
+    </fieldset>
+
+    <fieldset class="mm-fieldset">
+      <legend>Messaggio</legend>
+      <div class="mm-row">
+        <label for="mf-msg">Descrivi brevemente la tua richiesta <span class="req">*</span></label>
+        <textarea id="mf-msg" name="msg" rows="5" required placeholder="Scrivi qui la tua richiesta specifica…"></textarea>
+      </div>
+    </fieldset>
+
+    <div class="mm-actions">
+      <button type="submit" class="btn gold" id="mm-open-mail"><svg class="ic"><use href="#i-mail"/></svg>Apri in client email</button>
+      <button type="button" class="btn white" id="mm-download"><svg class="ic"><use href="#i-copy"/></svg>Scarica testo email</button>
+      <button type="button" class="btn ghost" id="mm-close2">Annulla</button>
+    </div>
+    <p class="mm-note">I campi con <span class="req">*</span> sono obbligatori.</p>
+  </form>
+</div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#mm-close').focus();
+
+  function closeModal(){ overlay.remove(); }
+  overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+  overlay.querySelector('#mm-close').addEventListener('click', closeModal);
+  overlay.querySelector('#mm-close2').addEventListener('click', closeModal);
+  document.addEventListener('keydown', function esc2(e){ if(e.key==='Escape'){ closeModal(); document.removeEventListener('keydown',esc2); }});
+
+  function buildEmailText(asHref){
+    const nome     = overlay.querySelector('#mf-nome').value.trim();
+    const funzione = overlay.querySelector('#mf-funzione').value.trim();
+    const scuola   = overlay.querySelector('#mf-scuola').value.trim();
+    const comune   = overlay.querySelector('#mf-comune').value.trim();
+    const msg      = overlay.querySelector('#mf-msg').value.trim();
+    const ambiti   = [...overlay.querySelectorAll('input[name="ambito"]:checked')].map(cb => cb.closest('label').querySelector('span').textContent);
+
+    const ambitiTxt = ambiti.length
+      ? ambiti.map((a,i) => (i+1)+'. '+a).join('\n')
+      : '(nessun ambito selezionato)';
+
+    const body =
+`Gentile ${sc.equipe},
+
+le scrivo in qualità di ${funzione||'…'} presso ${scuola||'…'} (${comune||'…'}).
+
+AMBITI DI INTERESSE:
+${ambitiTxt}
+
+RICHIESTA:
+${msg||'…'}
+
+In attesa di un riscontro, porgo cordiali saluti.
+
+${nome||'…'}
+${funzione||'…'}
+${scuola||'…'} – ${comune||'…'}`;
+
+    const subject = `Richiesta Équipe Formativa – ${sc.den} (${sc.cod})`;
+    if(asHref) return 'mailto:'+encodeURIComponent(sc.equipeMail)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    return { subject, body };
+  }
+
+  overlay.querySelector('#mail-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const nome = overlay.querySelector('#mf-nome').value.trim();
+    const funzione = overlay.querySelector('#mf-funzione').value.trim();
+    const msg = overlay.querySelector('#mf-msg').value.trim();
+    if(!nome){ overlay.querySelector('#mf-nome').focus(); return; }
+    if(!funzione){ overlay.querySelector('#mf-funzione').focus(); return; }
+    if(!msg){ overlay.querySelector('#mf-msg').focus(); return; }
+    window.location.href = buildEmailText(true);
+  });
+
+  overlay.querySelector('#mm-download').addEventListener('click', () => {
+    const {subject,body} = buildEmailText(false);
+    const txt = 'A: '+sc.equipeMail+'\nOggetto: '+subject+'\n\n'+body;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
+    a.download = 'email_equipe_'+sc.cod+'.txt';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  });
+}
 </script>
+
+<!-- MODALE EMAIL CSS -->
+<style>
+#mail-modal{position:fixed;inset:0;background:rgba(30,30,50,.55);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.mm-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.22);max-width:680px;width:100%;padding:32px 28px 24px;position:relative;max-height:90vh;overflow-y:auto}
+.mm-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1;padding:4px 8px;border-radius:6px}
+.mm-close:hover{background:#f0f0f0;color:#333}
+.mm-title{font-size:1.3rem;font-weight:800;color:var(--gold-d,#5b4a14);margin:0 0 6px}
+.mm-sub{font-size:.88rem;color:#666;margin:0 0 16px}
+.mm-to{background:#fffbe8;border:1px solid #ecd79a;border-radius:8px;padding:8px 14px;font-size:.88rem;margin-bottom:18px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.mm-label{font-weight:700;color:#7a6a3a;white-space:nowrap}
+.mm-val{color:#4a3f1d;word-break:break-all}
+.mm-fieldset{border:1px solid #e8e8f0;border-radius:10px;padding:14px 16px;margin:0 0 16px}
+.mm-fieldset legend{font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:#666;padding:0 6px}
+.mm-row{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.mm-row label{font-size:.85rem;font-weight:600;color:#444}
+.mm-row input,.mm-row textarea{border:1.5px solid #d8d8e8;border-radius:8px;padding:9px 12px;font-size:.95rem;font-family:inherit;background:#fafafa;transition:border .15s}
+.mm-row input:focus,.mm-row textarea:focus{outline:none;border-color:var(--gold,#d4a017);background:#fff}
+.mm-row input[readonly]{background:#f4f4f8;color:#888;cursor:default}
+.mm-hint{font-size:.83rem;color:#777;margin:8px 0 2px}
+.mm-check{display:flex;align-items:flex-start;gap:10px;margin-top:10px;cursor:pointer;font-size:.88rem;line-height:1.4;color:#333}
+.mm-check input[type=checkbox]{margin-top:3px;accent-color:var(--gold,#d4a017);flex-shrink:0;width:16px;height:16px}
+.mm-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.mm-note{font-size:.8rem;color:#999;margin:8px 0 0}
+.req{color:#c0392b}
+@media(max-width:500px){.mm-box{padding:20px 14px 18px}.mm-actions{flex-direction:column}}
+</style>
 </body>
 </html>
